@@ -1,0 +1,4 @@
+DBI
+DBD::SQLITE
+sqlite3
+sqlitebrowser
