@@ -1,0 +1,3 @@
+andressa | Camisas: 33 Uni | saldo: 32 pontos
+paulo | Calsas: 40 Uni | saldo: 80 pontos
+luiz | conjuntos: 4  | saldo: 12 pontos
