@@ -10,6 +10,7 @@ use feature "say";
 use Cwd;
 use Tk;
 use Tk::PNG;
+use DBI;
 
 
 
@@ -191,7 +192,7 @@ $footer->Label(
 
 #---------------------------------------------------------------------
 # Area de Texto 
-my $text = $mw->Scrolled("Listbox");
+our $text = $mw->Scrolled("Listbox");
 $text->configure(-background => 'white', #'LightBlue',
                  -foreground => 'darkblue',
                  -relief => 'ridge',
@@ -212,31 +213,31 @@ $text->pack(-side => 'left',
             -anchor => 'n',
             #-fill => 'y'
 );
-$text->insert('end', "produto / 650563");
 
 
 
 #---------------------------------------------------------------------
 #Pesquisa de codigos
-
-#botao
-$mw->Button(-text => 'Busca',
-            -cursor => 'hand2',
-#            -command => sub { $text->destroy if Tk::Exists($text); }
-             -command => \&buscarDados 
-            )->pack( -side => 'left',
-                     -anchor => 'n',
-                                     );
-
 #input
-my $busca = $mw->Entry(-background => 'white',
+our $busca = $mw->Entry(-background => 'white',
                        -text => 'codigo Produto',
+                       #-textvariable => $texto,
                        -width => 25);
 $busca->pack(-side => 'left',
              -anchor => 'n',
              -padx => 3,
              -ipady => 3
            );
+
+
+#botao
+$mw->Button(-text => 'Busca',
+            -cursor => 'hand2',
+#            -command => sub { $text->destroy if Tk::Exists($text); }
+             -command => \&buscarDados
+            )->pack( -side => 'left',
+                     -anchor => 'n');
+                                     
 
 #informação
 my $info = 'nulo';
@@ -259,14 +260,22 @@ MainLoop;
 
 #-------------------------Algoritmo de Busca ------------------------------
 sub buscarDados {
+    our $text;
+    our $busca;
+
+    my $codigo = $busca->get();
+
     $info = 'Buscando ...';
     $text->delete("1.0", "end");
         if(!open(FH, "db.txt")) {
             $text->insert("end", "Error: Base de dados não encontrada\n");
             return;
         }
-        while( <FH> ) { $text->insert("end", $_); }
-        close(FH);
+        while( <FH> ) { 
+            #$text->insert("end", $_); 
+            $text->insert("end", $_) if $_ =~ /$codigo/;
+        }
+        close(<FH>);
         $info = "Carregado";
 
 }
@@ -279,7 +288,7 @@ sub cadastrar {
     $winCadastro->configure(-background => 'white',
                             -title => "Cadastro de produto");
 
-    #Codigo
+    # Input Codigo Danfe
     $winCadastro->Label(-text => 'codigo DANFE:',
                         -relief => 'flat',
                         -background => 'white')->pack(-side => 'top',
@@ -292,7 +301,7 @@ sub cadastrar {
     $numero->pack(-side => 'top');
 
 
-    #Nome do produto
+    # Input Nome do produto
     $winCadastro->Label(-text => 'Nome Produto:',
                         -relief => 'flat',
                         -background => 'white')->pack(-side => 'top',
@@ -304,7 +313,7 @@ sub cadastrar {
                                      -font => 'default');
     $nome->pack(-side => 'top');
 
-    # Data
+    #  Input Data
     $winCadastro->Label(-text => 'Data de chegada:',
                         -relief => 'flat',
                         -background => 'white')->pack(-side => 'top',
@@ -317,7 +326,7 @@ sub cadastrar {
     $data->pack(-side => 'top');
 
 
-    # Departamento Categoria
+    # Input Departamento Categoria
     $winCadastro->Label(-text => 'Setor ("categoria"):',
                         -relief => 'flat',
                         -background => 'white')->pack(-side => 'top',
@@ -332,17 +341,59 @@ sub cadastrar {
 
 
 
-     my $cadastrar = $winCadastro->Button(-text => 'Cadastrar', 
-                                          -cursor => 'hand2',
-                                          -activebackground => 'grey',
-                                          -command => 
-    # Evento de Cadastro
-    sub { exit }
+#botão Cadastrar 
+     my $botaoCadastro = $winCadastro->Button(
+        -text => 'Cadastrar', 
+        -cursor => 'hand2',
+        -activebackground => 'grey',
+        -command => 
+                sub { 
+                        my @items;
+                            push(@items, ($numero->get(), 
+                                          $nome->get(), 
+                                          $data->get(), 
+                                          $setor->get()));
 
+                         &inserirItem(@items);
+                    });
 
-     );
-     $cadastrar->pack( -side => 'bottom',
+     $botaoCadastro->pack( -side => 'bottom',
                        -fill => 'x');
+
+
 }
 
-#sub inserirItem {}
+########################################################################################
+#                                  Inserção Banco de Dados 
+########################################################################################
+
+
+sub inserirItem {
+    #say $_ for @_;
+    my @data = @_;
+
+    my $dbh = DBI->connect(
+    "dbi:SQLite:dbname=Estoque.db",
+    "",
+    "",
+    { RaiseError => 1, AutoCommit => 0, PrintError => 0 },
+    );
+
+    #geração do codigo SQL
+    # my $sql = 
+    # qq{
+    # CREATE TABLE Estoque (codigo INTEGER, nome VARCHAR(255), data VARCHAR(128), setor  VARCHAR(128))
+    # };
+
+    #criação da tabela
+    #$dbh->do($sql);
+    #$dbh->commit();
+    #$dbh->rollback();
+
+	my $sql2 = 
+	qq{INSERT INTO Estoque (codigo, nome, data, setor) VALUES (?, ?, ?, ?)};
+	my $sth = $dbh->prepare($sql2);
+	$sth->execute($data[0], $data[1], $data[2], $data[3]);
+    $dbh->commit();
+    $dbh->rollback();
+}
