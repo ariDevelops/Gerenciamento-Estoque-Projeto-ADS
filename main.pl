@@ -47,10 +47,10 @@ $header->Photo(-file => './assets/32px/lixo1.png')
 # botões ferramentas
 
 # Entrada de produtos 
-my $entProduto = $header->Checkbutton(
+my $entProduto = $header->Button(
     -image => $entrada,
-    -indicatoron => 0,
-    -selectcolor => 'darkblue',
+    #-indicatoron => 0,
+    #-selectcolor => 'darkblue',
     -background => 'blue',
     -activebackground => 'darkblue',
     -highlightbackground => 'blue',
@@ -68,16 +68,17 @@ $entProduto->pack(-side => 'left',
 
 
 # Banco de dados
-my $dbProdutos = $header->Checkbutton(
+my $dbProdutos = $header->Button(
     -image => $db,
-    -indicatoron => 0,
-    -selectcolor => 'darkblue',
+    #-indicatoron => 0,
+    #-selectcolor => 'darkblue',
     -background => 'blue',
     -activebackground => 'darkblue',
     -highlightbackground => 'blue',
     -relief => 'flat',
     -borderwidth => 0,
     -cursor => 'hand2',
+    -command => \&InterfaceSQL
 );
 $dbProdutos->configure(-width => '40', 
                        -height => '40');
@@ -88,10 +89,10 @@ $dbProdutos->pack(-side => 'left',
 
 
 # Envio de Produtos 
-my $envProdutos = $header->Checkbutton(
+my $envProdutos = $header->Button(
     -image => $envios,
-    -indicatoron => 0,
-    -selectcolor => 'darkblue',
+    #-indicatoron => 0,
+    #-selectcolor => 'darkblue',
     -background => 'blue',
     -activebackground => 'darkblue',
     -highlightbackground => 'blue',
@@ -108,10 +109,10 @@ $envProdutos->pack(-side => 'left',
 
 
 # Faturamento 
-my $faturamento = $header->Checkbutton(
+my $faturamento = $header->Button(
     -image => $vendas,
-    -indicatoron => 0,
-    -selectcolor => 'darkblue',
+    #-indicatoron => 0,
+    #-selectcolor => 'darkblue',
     -background => 'blue',
     -activebackground => 'darkblue',
     -highlightbackground => 'blue',
@@ -127,10 +128,10 @@ $faturamento->pack(-side => 'left',
                   -pady => 5);
 
 # Perfil do Estoquista 
-my $estoquistaPerfil = $header->Checkbutton(
+my $estoquistaPerfil = $header->Button(
     -image => $estoquista,
-    -indicatoron => 0,
-    -selectcolor => 'darkblue',
+    #-indicatoron => 0,
+    #-selectcolor => 'darkblue',
     -background => 'blue',
     -activebackground => 'darkblue',
     -highlightbackground => 'blue',
@@ -253,7 +254,7 @@ MainLoop;
 
 
 ########################################################################################
-#                                   Algoritmos Logicos
+#                  Area Principal Campo de Busca e relatorio Produtos
 ########################################################################################
 
 
@@ -280,8 +281,9 @@ sub buscarDados {
 
 }
 
-
-#-------------------------Janela de Cadastro------------------------------
+########################################################################################
+#---------------------------------Janela de Cadastro------------------------------
+########################################################################################
 sub cadastrar {
     my $winCadastro = $mw->Toplevel();
     $winCadastro->geometry('400x356');
@@ -313,7 +315,7 @@ sub cadastrar {
                                      -font => 'default');
     $nome->pack(-side => 'top');
 
-    #  Input Data
+    #  Input Data de chegada
     $winCadastro->Label(-text => 'Data de chegada:',
                         -relief => 'flat',
                         -background => 'white')->pack(-side => 'top',
@@ -341,7 +343,7 @@ sub cadastrar {
 
 
 
-#botão Cadastrar 
+	# Botão de Cadastro
      my $botaoCadastro = $winCadastro->Button(
         -text => 'Cadastrar', 
         -cursor => 'hand2',
@@ -364,36 +366,70 @@ sub cadastrar {
 }
 
 ########################################################################################
-#                                  Inserção Banco de Dados 
+#                               Logica de Banco de Dados 
 ########################################################################################
 
 
 sub inserirItem {
     #say $_ for @_;
     my @data = @_;
+    my $PATH = "$ENV{\"HOME\"}/.config/easy-estoque/Estoque.db";
+    my $dir = "$ENV{\"HOME\"}/.config/easy-estoque";
+    my $dbh;
+    my $condicao = undef;
+    
+    #checa se o diretorio de configuracoes existe
+    if ( -e $dir and -d $dir ) {
+		
+		# Conecta o Banco de Dados
+		 $dbh = DBI->connect(
+		"dbi:SQLite:dbname=$PATH",
+		"",
+		"",
+		{ RaiseError => 1, AutoCommit => 0, PrintError => 0 },
+		);
+		$condicao = "existe";
+	
+	 } else {
+		 # Cria o diretorio antes de conectar o banco 
+		mkdir $dir;
+		$dbh = DBI->connect(
+		"dbi:SQLite:dbname=$PATH",
+		"",
+		"",
+		{ RaiseError => 1, AutoCommit => 0, PrintError => 0 },
+		);
+		$condicao = "nao existe";
+	 }
 
-    my $dbh = DBI->connect(
-    "dbi:SQLite:dbname=Estoque.db",
-    "",
-    "",
-    { RaiseError => 1, AutoCommit => 0, PrintError => 0 },
-    );
 
-    #geração do codigo SQL
-    # my $sql = 
-    # qq{
-    # CREATE TABLE Estoque (codigo INTEGER, nome VARCHAR(255), data VARCHAR(128), setor  VARCHAR(128))
-    # };
+	#checa se o banco de dados ja existe!
+	if ( $condicao eq "nao existe") {
+     my $sql = 
+     qq{
+     CREATE TABLE Estoque (codigo INTEGER, nome VARCHAR(255), data VARCHAR(128), setor  VARCHAR(128))
+     };
+    $dbh->do($sql);
+    $dbh->commit();
+    $dbh->rollback();
+	}
+	 
 
-    #criação da tabela
-    #$dbh->do($sql);
-    #$dbh->commit();
-    #$dbh->rollback();
-
+	if ( $condicao eq "existe" ) {
 	my $sql2 = 
 	qq{INSERT INTO Estoque (codigo, nome, data, setor) VALUES (?, ?, ?, ?)};
+	
 	my $sth = $dbh->prepare($sql2);
 	$sth->execute($data[0], $data[1], $data[2], $data[3]);
     $dbh->commit();
     $dbh->rollback();
+	}
+	
+	
+    
 }
+
+sub InterfaceSQL {
+    my $PATH = "$ENV{\"HOME\"}/.config/easy-estoque/Estoque.db";
+    system("sqlitebrowser $PATH");
+	}

@@ -1,5 +1,6 @@
 DBI or debian package -> libdbi-perl
 DBD::SQLITE or debian package -> libdbd-sqlite3-perl, libdbd-sqlite3
+perl-tk
 
 PROGRAMAS
 sqlite3

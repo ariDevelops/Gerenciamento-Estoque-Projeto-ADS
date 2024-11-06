@@ -15,16 +15,16 @@ use Carp 'croak';
     "",
     "",
     { RaiseError => 1, AutoCommit => 0, PrintError => 0 },
-    ) or die $DBH::errstr;
+    ); #or die $DBH::errstr;
 
-    my $sql =
-    qq{
-    CREATE TABLE Produtos (nome VARCHAR(128), codigo INTEGER, data VARCHAR(255), setor VARCHAR(128))
-    };
+    #my $sql =
+    #qq{
+    #CREATE TABLE Produtos (nome VARCHAR(128), codigo INTEGER, data VARCHAR(255), setor VARCHAR(128))
+    #};
 
     #eval {
-      $dbh->do($sql);
-      $dbh->commit();
+      #$dbh->do($sql);
+      #$dbh->commit();
     #};
 
     #if ($@) {
@@ -39,32 +39,34 @@ use Carp 'croak';
 		#'Tenis Juv' => 3466
 	#);
 	
-	my $sql2 = 
-	qq{INSERT INTO Produtos (nome, codigo, data, setor) VALUES (?, ?, ?, ?)};
+#	my $sql2 = 
+#	qq{INSERT INTO Produtos (nome, codigo, data, setor) VALUES (?, ?, ?, ?)};
 	
 	#eval {
-		my($nome, $codigo, $data, $setor) = ('camisa babyloo', 4466, '11/23', 'infantil');
-		my $sth = $dbh->prepare($sql2);
-		$sth->execute($nome, $codigo, $data, $setor);
+#		my($nome, $codigo, $data, $setor) = ('tenis bob', 2366, '10/23', 'infantil');
+#		my $sth = $dbh->prepare($sql2);
+#		$sth->execute($nome, $codigo, $data, $setor);
 		
 			#while( my($nome, $codigo) = each %estoque) {
 				#$sth->execute($nome, $codigo);
 			#}
 			
-			$dbh->commit();
+			#$dbh->commit();
 			#return 1;
 		#}
 
-	#my $sql = 
-	#qq{SELECT nome, codigo FROM Produtos};
-	#my $sth = $dbh->prepare($sql);
-	#$sth->execute;
+	my $sql = 
+	qq{SELECT nome, codigo, data, setor FROM Produtos};
+	my $sth = $dbh->prepare($sql);
+	$sth->execute;
 	
-	#while (my @row = $sth->fetchrow_array ) {
-		#print "$row[0] - $row[1] \n";
-	#}
+	while (my @row = $sth->fetchrow_array ) {
+	#next if $_ =~ /tenis/;
+	print "nome: $row[0]\tcodigo: $row[1]\tdata: $row[2]\tsetor: $row[3] \n" 
+		if $row[0] =~ /camisa/;
+	}
 	
-	#$dbh->rollback();
+	$dbh->rollback();
 
 
 
