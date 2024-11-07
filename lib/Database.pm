@@ -8,7 +8,7 @@ use DBI;
 use Carp 'croak';
 #use Exporter::NoWork;
 
-  my $db_file = "loja.db";
+  my $db_file = "Estoque.db";
 
     my $dbh =  DBI->connect(
     "dbi:SQLite:dbname=$db_file",
